@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:untitled/models/question.dart';
+import './models/question.dart';
+import './session_screen/session_screen.dart';
+import './widgets/question_list.dart';
 
 import './models/todo.dart';
 import './widgets/todo_list.dart';
@@ -63,30 +65,51 @@ class _Task3State extends State<Task3> {
     }
   }
 
+  void _openSessionScreen(BuildContext context) async {
+    print(questions.map((element) => element.status).toList());
+    List<Question> updatedQuestions = await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => SessionScreen(questions: questions),
+        ));
+    setState(() {
+      questions = updatedQuestions;
+    });
+    print(updatedQuestions.map((element) => element.status).toList());
+  }
+
   @override
   Widget build(BuildContext context) {
-    return DefaultTabController(
-      initialIndex: 0,
-      length: 2,
-      child: Scaffold(
+    return Scaffold(
         appBar: AppBar(
           title: Text(widget.title),
-          bottom: const TabBar(tabs: [
-            Tab(text: "ToDo"),
-            Tab(text: "Done"),
-          ]),
+          // bottom: const TabBar(tabs: [
+          //   Tab(text: "ToDo"),
+          //   Tab(text: "Done"),
+          // ]),
         ),
-        body: TabBarView(
+        body: Column(
           children: [
-            ToDoList(todos: todos, onCheck: _onCheck),
-            ToDoList(todos: dones, onCheck: _onUncheck)
+            ElevatedButton(
+              style: TextButton.styleFrom(
+                textStyle: const TextStyle(fontSize: 20),
+              ),
+              onPressed: () => _openSessionScreen(context),
+              child: const Text('Start SRS Session'),
+
+            ),
+            Expanded(
+              child: QuestionList(questions: questions),
+              ),
+            // QuestionList(questions: questions),
+            // ToDoList(todos: todos, onCheck: _onCheck),
+            // ToDoList(todos: dones, onCheck: _onUncheck)
           ],
         ),
         floatingActionButton: FloatingActionButton(
           child: const Icon(Icons.add),
           onPressed: () => _openAddScreen(context),
         ),
-      ),
     );
   }
 }
