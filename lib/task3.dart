@@ -16,42 +16,14 @@ class Task3 extends StatefulWidget {
 }
 
 class _Task3State extends State<Task3> {
-  List<ToDo> todos = [];
-  List<ToDo> dones = [];
+
   List<Question> questions = [];
 
-  void _addToDo(ToDo newToDo) {
-    setState(() {
-      todos.insert(0, newToDo);
-    });
-  }
 
   void _addQuestion(Question newQuestion) {
     setState(() {
       questions.insert(questions.length, newQuestion);
     });
-  }
-
-  void _onCheck(bool newValue, int id) {
-    int index = todos.indexWhere((todo) => todo.id == id);
-    if (index != -1 || !todos[index].isDone) {
-      setState(() {
-        todos[index].isDone = true;
-        ToDo newDone = todos.removeAt(index);
-        dones.insert(0, newDone);
-      });
-    }
-  }
-
-  void _onUncheck(bool newValue, int id) {
-    int index = dones.indexWhere((todo) => todo.id == id);
-    if (index != -1 || todos[index].isDone) {
-      setState(() {
-        dones[index].isDone = false;
-        ToDo newToDo = dones.removeAt(index);
-        todos.insert(0, newToDo);
-      });
-    }
   }
 
   void _openAddScreen(BuildContext context) async {
@@ -101,9 +73,6 @@ class _Task3State extends State<Task3> {
             Expanded(
               child: QuestionList(questions: questions),
               ),
-            // QuestionList(questions: questions),
-            // ToDoList(todos: todos, onCheck: _onCheck),
-            // ToDoList(todos: dones, onCheck: _onUncheck)
           ],
         ),
         floatingActionButton: FloatingActionButton(
