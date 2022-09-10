@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "9459940228",
+    "project_id": "srs-motion",
+    "storage_bucket": "srs-motion.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:9459940228:android:97308b0875d1507c85bbd1",
+        "android_client_info": {
+          "package_name": "com.gbbak.srsmotion"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "9459940228-cfaj1u8qi7hcvcn56k1tr9sah1c2u4n6.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCJ22e5JWEg3aK91RM259aUITlvGe6k-Hw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "9459940228-cfaj1u8qi7hcvcn56k1tr9sah1c2u4n6.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
