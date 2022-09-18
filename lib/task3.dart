@@ -16,9 +16,32 @@ class Task3 extends StatefulWidget {
 }
 
 class _Task3State extends State<Task3> {
-
-  List<Question> questions = [];
-
+  List<Question> questions = [
+    Question(
+        id: 01,
+        question: 'Accessibility',
+        answer:
+            'Objects and environments should be designed to be usable without modification.',
+        createdDate: DateTime(2022),
+        isDone: false,
+        status: Status.created),
+    Question(
+        id: 01,
+        question: 'Fitts Law',
+        answer:
+        'The time required to move to the target is a function of the target size and distance to the target.',
+        createdDate: DateTime(2022),
+        isDone: false,
+        status: Status.created),
+    Question(
+        id: 03,
+        question: 'Consistency',
+        answer:
+        'Similar parts should be expressed in similar ways.',
+        createdDate: DateTime(2022),
+        isDone: false,
+        status: Status.created)
+  ];
 
   void _addQuestion(Question newQuestion) {
     setState(() {
@@ -53,32 +76,27 @@ class _Task3State extends State<Task3> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          title: Text(widget.title),
-          // bottom: const TabBar(tabs: [
-          //   Tab(text: "ToDo"),
-          //   Tab(text: "Done"),
-          // ]),
-        ),
-        body: Column(
-          children: [
-            ElevatedButton(
-              style: TextButton.styleFrom(
-                textStyle: const TextStyle(fontSize: 20),
-              ),
-              onPressed: () => _openSessionScreen(context),
-              child: const Text('Start SRS Session'),
-
+      appBar: AppBar(
+        title: Text(widget.title),
+      ),
+      body: Column(
+        children: [
+          ElevatedButton(
+            style: TextButton.styleFrom(
+              textStyle: const TextStyle(fontSize: 20),
             ),
-            Expanded(
-              child: QuestionList(questions: questions),
-              ),
-          ],
-        ),
-        floatingActionButton: FloatingActionButton(
-          child: const Icon(Icons.add),
-          onPressed: () => _openAddScreen(context),
-        ),
+            onPressed: () => _openSessionScreen(context),
+            child: const Text('Start SRS Session'),
+          ),
+          Expanded(
+            child: QuestionList(questions: questions),
+          ),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        child: const Icon(Icons.add),
+        onPressed: () => _openAddScreen(context),
+      ),
     );
   }
 }

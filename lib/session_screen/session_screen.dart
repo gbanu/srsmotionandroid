@@ -20,9 +20,20 @@ class _SessionScreenState extends State<SessionScreen> {
   int countQuestions = 0;
   int currentQuestionIndex = 0;
   bool isAnswerVisible = false;
+  bool finished = false;
 
   late ESenseManager eSenseManager;
-  late StreamSubscription subscription;
+  late StreamSubscription subscriptionConnection;
+  late StreamSubscription subscriptionEvents;
+
+  static const CALIBRATION_SAMPLE_COUNT = 20;
+  late int initialPositionX;
+  late int initialPositionY;
+  late int initialPositionZ;
+
+  List<int> samplesX = [];
+  List<int> samplesY = [];
+  List<int> samplesZ = [];
 
   TextToSpeech tts = TextToSpeech();
 
@@ -35,60 +46,30 @@ class _SessionScreenState extends State<SessionScreen> {
         updatedQuestions.where((i) => (i.status != Status.remembered)).toList();
     countQuestions = sessionQuestions.length;
     currentQuestionIndex = 0;
+    tts.setLanguage('en-US');
     if (countQuestions > 0) {
       tts.speak(sessionQuestions[currentQuestionIndex].question);
+    } else {
+      finished = true;
     }
 
     eSenseManager = ESenseManager("eSense-0362");
     _connectToESense();
-    subscription = eSenseManager.sensorEvents.listen(
-      (event) {
-        print('SENSOR event: $event');
-      },
-      onError: (err) {
-        print(err);
-      },
-      cancelOnError: false,
+    subscriptionConnection = eSenseManager.connectionEvents.listen(
+        (event) {
+          if (event.type == ConnectionType.connected) {
+            subscriptionEvents = eSenseManager.sensorEvents.listen((event) {
+              _handleNewSnapshot(event);
+            });
+          }
+        }
     );
   }
 
   Future<void> _connectToESense() async {
     await eSenseManager.disconnect();
     bool hasSuccessfulConnected = await eSenseManager.connect();
-    print("hasSuccessfulConnected: $hasSuccessfulConnected");
-  }
-
-  Future<void> _startListening() async {
-    StreamSubscription subscription =
-        eSenseManager.sensorEvents.listen((event) {
-      print('SENSOR event: $event');
-    });
-    bool hasSuccessfulConnected = await eSenseManager.connect();
-    print("hasSuccessfulConnected: $hasSuccessfulConnected");
-  }
-
-  List<double> _handleAccel(SensorEvent event) {
-    if (event.accel != null) {
-      return [
-        event.accel![0].toDouble(),
-        event.accel![1].toDouble(),
-        event.accel![2].toDouble(),
-      ];
-    } else {
-      return [0.0, 0.0, 0.0];
-    }
-  }
-
-  List<double> _handleGyro(SensorEvent event) {
-    if (event.gyro != null) {
-      return [
-        event.gyro![0].toDouble(),
-        event.gyro![1].toDouble(),
-        event.gyro![2].toDouble(),
-      ];
-    } else {
-      return [0.0, 0.0, 0.0];
-    }
+    print("hasSuccessfulConnected to ESense: $hasSuccessfulConnected");
   }
 
   Question updateIfRemembered(Question question) {
@@ -103,16 +84,18 @@ class _SessionScreenState extends State<SessionScreen> {
 
   void nextQuestion() {
     setState(() {
-      currentQuestionIndex++;
+      if (currentQuestionIndex == countQuestions - 1) {
+        finished = true;
+      } else {
+        currentQuestionIndex++;
+      }
       isAnswerVisible = false;
     });
-    if (currentQuestionIndex < countQuestions) {
+    if (!finished) {
       tts.speak(sessionQuestions[currentQuestionIndex].question);
     } else {
       tts.speak('You studied all questions!');
     }
-
-    print(sessionQuestions.map((element) => element.status).toList());
   }
 
   void showAnswer() {
@@ -122,21 +105,23 @@ class _SessionScreenState extends State<SessionScreen> {
     tts.speak(sessionQuestions[currentQuestionIndex].answer);
   }
 
-  void increaseStatus(int index) {
-    int statusIdx = sessionQuestions[index].status.index;
+  void increaseStatus() {
+    int statusIdx = sessionQuestions[currentQuestionIndex].status.index;
     if (statusIdx < 4) {
       setState(() {
-        sessionQuestions[index].status = Status.values[++statusIdx];
+        sessionQuestions[currentQuestionIndex].status =
+            Status.values[++statusIdx];
       });
     }
     nextQuestion();
   }
 
-  void decreaseStatus(int index) {
-    int statusIdx = sessionQuestions[index].status.index;
+  void decreaseStatus() {
+    int statusIdx = sessionQuestions[currentQuestionIndex].status.index;
     if (statusIdx > 0) {
       setState(() {
-        sessionQuestions[index].status = Status.values[--statusIdx];
+        sessionQuestions[currentQuestionIndex].status =
+            Status.values[--statusIdx];
       });
     }
     nextQuestion();
@@ -146,6 +131,22 @@ class _SessionScreenState extends State<SessionScreen> {
     Navigator.pop(context, sessionQuestions);
   }
 
+  _handleNewSnapshot(event) {
+    if(!finished) {
+      if (!isAnswerVisible) {
+        if (event.accel![1] > 3500) {
+          showAnswer();
+        }
+      } else {
+        if (event.accel![2] > 500) {
+          decreaseStatus();
+        } else if (event.accel![2] < -5000) {
+          increaseStatus();
+        }
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -153,7 +154,7 @@ class _SessionScreenState extends State<SessionScreen> {
           title: const Text("SRS session"),
         ),
         body: Column(children: [
-          if (currentQuestionIndex == countQuestions) ...[
+          if (finished) ...[
             TextContainer(text: 'You have studied all questions')
           ] else ...[
             Center(
@@ -179,7 +180,7 @@ class _SessionScreenState extends State<SessionScreen> {
                 if (snapshot.hasData) {
                   switch (snapshot.data!.type) {
                     case ConnectionType.connected:
-                      return Text("Counter: ${snapshot.data}");
+                      return Container();
 
                     case ConnectionType.unknown:
                       return ReconnectButton(
@@ -212,19 +213,19 @@ class _SessionScreenState extends State<SessionScreen> {
               mainAxisSize: MainAxisSize.max,
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                if (currentQuestionIndex == countQuestions) ...[
+                if (finished) ...[
                   BottomBarButton(
                       onPressed: onSessionFinish, text: 'Finish Session'),
                 ] else ...[
                   if (isAnswerVisible) ...[
                     BottomBarButton(
                         onPressed: () {
-                          increaseStatus(currentQuestionIndex);
+                          increaseStatus();
                         },
                         text: 'Easy'),
                     BottomBarButton(
                         onPressed: () {
-                          decreaseStatus(currentQuestionIndex);
+                          decreaseStatus();
                         },
                         text: 'Hard'),
                   ] else ...[
@@ -233,6 +234,14 @@ class _SessionScreenState extends State<SessionScreen> {
                 ]
               ],
             )));
+  }
+
+  @override
+  void dispose() {
+    subscriptionEvents.cancel();
+    subscriptionConnection.cancel();
+    eSenseManager.disconnect();
+    super.dispose();
   }
 }
 
